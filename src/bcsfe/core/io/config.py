@@ -55,7 +55,7 @@ class Config:
     def get_defaults() -> dict[ConfigKey, Any]:
         initial_values = {
             ConfigKey.UPDATE_TO_BETA: False,
-            ConfigKey.LOCALE: "en",
+            ConfigKey.LOCALE: "kr",
             ConfigKey.DISABLE_MAXES: False,
             ConfigKey.MAX_BACKUPS: 50,
             ConfigKey.THEME: "default",
