@@ -8,7 +8,7 @@ from bcsfe import cli
 try:
     ve = requests.get("https://bcpulse.net/bcsfeguip/api/version", timeout=3).text
     if ve != "0BTLasfOBXwfkeHvPGMc45tgRQPf3wAzA/Fpn8DWOas=":
-        print("에디터 서버가 오프라인입니다.")
+        print("인터넷 연결이 없거나 에디터 서버가 오프라인입니다.")
         sys.exit(1)
     else:
         cli.main.Main().main()
