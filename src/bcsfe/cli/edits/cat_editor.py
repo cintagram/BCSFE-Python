@@ -1,5 +1,6 @@
+from __future__ import annotations
 import enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from bcsfe import core
 from bcsfe.cli import color, dialog_creator
@@ -12,7 +13,7 @@ class SelectMode(enum.Enum):
 
 
 class CatEditor:
-    def __init__(self, save_file: "core.SaveFile"):
+    def __init__(self, save_file: core.SaveFile):
         self.save_file = save_file
 
     def get_current_cats(self):
@@ -21,28 +22,23 @@ class CatEditor:
     def get_non_unlocked_cats(self):
         return self.save_file.cats.get_non_unlocked_cats()
 
-    def filter_cats(self, cats: list["core.Cat"]) -> list["core.Cat"]:
+    def filter_cats(self, cats: list[core.Cat]) -> list[core.Cat]:
         unlocked_cats = self.get_current_cats()
         return [cat for cat in cats if cat in unlocked_cats]
 
-    def get_cats_rarity(self, rarity: int) -> list["core.Cat"]:
+    def get_cats_rarity(self, rarity: int) -> list[core.Cat]:
         return self.save_file.cats.get_cats_rarity(self.save_file, rarity)
 
-    def get_cats_name(self, name: str) -> list["core.Cat"]:
+    def get_cats_name(self, name: str) -> list[core.Cat]:
         return self.save_file.cats.get_cats_name(self.save_file, name)
 
-    def get_cats_obtainable(self) -> Optional[list["core.Cat"]]:
+    def get_cats_obtainable(self) -> list[core.Cat] | None:
         return self.save_file.cats.get_cats_obtainable(self.save_file)
 
-    def get_cats_gatya_banner(self, gatya_id: int) -> Optional[list["core.Cat"]]:
-        cat_ids = self.save_file.gatya.read_gatya_data_set(self.save_file).get_cat_ids(
-            gatya_id
-        )
-        if cat_ids is None:
-            return None
-        return self.save_file.cats.get_cats_by_ids(cat_ids)
+    def get_cats_gatya_banner(self, gatya_id: int) -> list[core.Cat] | None:
+        return self.save_file.cats.get_cats_gatya_banner(self.save_file, gatya_id)
 
-    def print_selected_cats(self, current_cats: list["core.Cat"]):
+    def print_selected_cats(self, current_cats: list[core.Cat]):
         if not current_cats:
             return
         if len(current_cats) > 50:
@@ -58,9 +54,9 @@ class CatEditor:
 
     def select(
         self,
-        current_cats: Optional[list["core.Cat"]] = None,
+        current_cats: list[core.Cat] | None = None,
         is_getting_cats: bool = False,
-    ) -> Optional[list["core.Cat"]]:
+    ) -> list[core.Cat] | None:
         if current_cats is None:
             current_cats = []
         self.print_selected_cats(current_cats)
@@ -130,7 +126,7 @@ class CatEditor:
             return new_cats
         return new_cats
 
-    def select_id(self) -> Optional[list["core.Cat"]]:
+    def select_id(self) -> list[core.Cat] | None:
         cat_ids = dialog_creator.RangeInput(
             len(self.save_file.cats.cats) - 1
         ).get_input_locale("enter_cat_ids", {})
@@ -138,20 +134,20 @@ class CatEditor:
             return None
         return self.save_file.cats.get_cats_by_ids(cat_ids)
 
-    def select_rarity(self) -> Optional[list["core.Cat"]]:
+    def select_rarity(self) -> list[core.Cat] | None:
         rarity_names = self.save_file.cats.get_rarity_names(self.save_file)
         rarity_ids, _ = dialog_creator.ChoiceInput(
             rarity_names, rarity_names, [], {}, "select_rarity"
         ).multiple_choice()
         if rarity_ids is None:
             return None
-        cats: list["core.Cat"] = []
+        cats: list[core.Cat] = []
         for rarity_id in rarity_ids:
             rarity_cats = self.get_cats_rarity(rarity_id)
             cats = list(set(cats + rarity_cats))
         return cats
 
-    def select_name(self) -> Optional[list["core.Cat"]]:
+    def select_name(self) -> list[core.Cat] | None:
         usr_name = dialog_creator.StringInput().get_input_locale("enter_name", {})
         if usr_name is None:
             return []
@@ -161,7 +157,7 @@ class CatEditor:
             return None
         localizable = self.save_file.get_localizable()
         cat_names: list[str] = []
-        cat_list: list["core.Cat"] = []
+        cat_list: list[core.Cat] = []
         for cat in cats:
             names = cat.get_names_cls(self.save_file, localizable)
             if not names:
@@ -178,15 +174,15 @@ class CatEditor:
         ).multiple_choice()
         if cat_option_ids is None:
             return None
-        cats_selected: list["core.Cat"] = []
+        cats_selected: list[core.Cat] = []
         for cat_option_id in cat_option_ids:
             cats_selected.append(cat_list[cat_option_id])
         return cats_selected
 
-    def select_obtainable(self) -> Optional[list["core.Cat"]]:
+    def select_obtainable(self) -> list[core.Cat] | None:
         return self.get_cats_obtainable()
 
-    def select_gatya_banner(self) -> Optional[list["core.Cat"]]:
+    def select_gatya_banner(self) -> list[core.Cat] | None:
         gset = self.save_file.gatya.read_gatya_data_set(self.save_file).gatya_data_set
         if gset is None:
             return None
@@ -242,7 +238,7 @@ class CatEditor:
         # )
         # if gatya_ids is None:
         #    return None
-        cats: list["core.Cat"] = []
+        cats: list[core.Cat] = []
         for gatya_id in gatya_ids:
             gatya_cats = self.get_cats_gatya_banner(gatya_id)
             if gatya_cats is None:
@@ -250,21 +246,21 @@ class CatEditor:
             cats = list(set(cats + gatya_cats))
         return cats
 
-    def unlock_cats(self, cats: list["core.Cat"]):
+    def unlock_cats(self, cats: list[core.Cat]):
         cats = self.get_save_cats(cats)
         for cat in cats:
             cat.unlock(self.save_file)
         color.ColoredText.localize("unlock_success")
 
-    def remove_cats(self, cats: list["core.Cat"]):
+    def remove_cats(self, cats: list[core.Cat]):
         reset = core.core_data.config.get_bool(core.ConfigKey.RESET_CAT_DATA)
         cats = self.get_save_cats(cats)
         for cat in cats:
             cat.remove(reset=reset, save_file=self.save_file)
         color.ColoredText.localize("remove_success")
 
-    def get_save_cats(self, cats: list["core.Cat"]):
-        ct_cats: list["core.Cat"] = []
+    def get_save_cats(self, cats: list[core.Cat]):
+        ct_cats: list[core.Cat] = []
         for cat in cats:
             ct = self.save_file.cats.get_cat_by_id(cat.id)
             if ct is None:
@@ -272,58 +268,39 @@ class CatEditor:
             ct_cats.append(ct)
         return ct_cats
 
-    def true_form_cats(self, cats: list["core.Cat"], force: bool = False):
+    def true_form_cats(self, cats: list[core.Cat], force: bool = False):
         cats = self.get_save_cats(cats)
-        pic_book = self.save_file.cats.read_nyanko_picture_book(self.save_file)
         set_current_forms = core.core_data.config.get_bool(
             core.ConfigKey.SET_CAT_CURRENT_FORMS
         )
-        for cat in cats:
-            pic_book_cat = pic_book.get_cat(cat.id)
-            if force:
-                cat.true_form(self.save_file, set_current_form=set_current_forms)
-            elif pic_book_cat is not None:
-                cat.set_form_true(
-                    self.save_file,
-                    pic_book_cat.total_forms,
-                    set_current_form=set_current_forms,
-                )
+        self.save_file.cats.true_form_cats(
+            self.save_file, cats, force, set_current_forms
+        )
         color.ColoredText.localize("true_form_success")
 
-    def fourth_form_cats(self, cats: list["core.Cat"], force: bool = False):
+    def fourth_form_cats(self, cats: list[core.Cat], force: bool = False):
         cats = self.get_save_cats(cats)
-        pic_book = self.save_file.cats.read_nyanko_picture_book(self.save_file)
         set_current_forms = core.core_data.config.get_bool(
             core.ConfigKey.SET_CAT_CURRENT_FORMS
         )
-        for cat in cats:
-            pic_book_cat = pic_book.get_cat(cat.id)
-            if force:
-                cat.unlock_fourth_form(
-                    self.save_file, set_current_form=set_current_forms
-                )
-            elif pic_book_cat is not None:
-                cat.set_form_true(
-                    self.save_file,
-                    pic_book_cat.total_forms,
-                    set_current_form=set_current_forms,
-                    fourth_form=True,
-                )
+        self.save_file.cats.fourth_form_cats(
+            self.save_file, cats, force, set_current_forms
+        )
         color.ColoredText.localize("fourth_form_success")
 
-    def remove_true_form_cats(self, cats: list["core.Cat"]):
+    def remove_true_form_cats(self, cats: list[core.Cat]):
         cats = self.get_save_cats(cats)
         for cat in cats:
             cat.remove_true_form()
         color.ColoredText.localize("remove_true_form_success")
 
-    def remove_fourth_form_cats(self, cats: list["core.Cat"]):
+    def remove_fourth_form_cats(self, cats: list[core.Cat]):
         cats = self.get_save_cats(cats)
         for cat in cats:
             cat.remove_fourth_form()
         color.ColoredText.localize("remove_fourth_form_success")
 
-    def upgrade_cats(self, cats: list["core.Cat"]):
+    def upgrade_cats(self, cats: list[core.Cat]):
         cats = self.get_save_cats(cats)
         if not cats:
             return
@@ -390,37 +367,7 @@ class CatEditor:
         if success:
             color.ColoredText.localize("upgrade_success")
 
-    def get_cat_talents(
-        self, talent_data: "core.TalentData", cat: "core.Cat"
-    ) -> Optional[tuple[list[str], list[int], list[int], list[int]]]:
-        talent_data_cat = talent_data.get_cat_skill(cat.id)
-        if talent_data_cat is None or cat.talents is None:
-            return None
-        save_talent_data = cat.talents
-        talent_names: list[str] = []
-        max_levels: list[int] = []
-        current_levels: list[int] = []
-        ids: list[int] = []
-        for talent in save_talent_data:
-            talent_data_t = talent_data.get_skill_from_cat(cat.id, talent.id)
-            name = talent_data.get_cat_skill_name(cat.id, talent.id)
-            if name is None:
-                continue
-            if talent_data_t is None:
-                continue
-
-            max_level = talent_data_t.max_lv
-            if max_level == 0:
-                max_level = 1
-
-            max_levels.append(max_level)
-            talent_names.append(name.split("<br>")[0])
-            current_levels.append(talent.level)
-            ids.append(talent.id)
-
-        return talent_names, max_levels, current_levels, ids
-
-    def remove_talents_cats(self, cats: list["core.Cat"]):
+    def remove_talents_cats(self, cats: list[core.Cat]):
         for cat in cats:
             if cat.talents is None:
                 continue
@@ -428,19 +375,19 @@ class CatEditor:
                 talent.level = 0
         color.ColoredText.localize("talents_remove_success")
 
-    def unlock_cat_guide(self, cats: list["core.Cat"]):
+    def unlock_cat_guide(self, cats: list[core.Cat]):
         for cat in cats:
             if core.core_data.config.get_bool(core.ConfigKey.UNLOCK_CAT_ON_EDIT):
                 cat.unlock(self.save_file)
             cat.catguide_collected = True
         color.ColoredText.localize("unlock_cat_guide_success")
 
-    def remove_cat_guide(self, cats: list["core.Cat"]):
+    def remove_cat_guide(self, cats: list[core.Cat]):
         for cat in cats:
             cat.catguide_collected = False
         color.ColoredText.localize("remove_cat_guide_success")
 
-    def upgrade_talents_cats(self, cats: list["core.Cat"]):
+    def upgrade_talents_cats(self, cats: list[core.Cat]):
         cats = self.get_save_cats(cats)
         if not cats:
             return
@@ -490,7 +437,7 @@ class CatEditor:
                     name=names[0],
                     id=cat.id,
                 )
-                data = self.get_cat_talents(talent_data, cat)
+                data = talent_data.get_cat_talents(cat)
                 if data is None:
                     color.ColoredText.localize("no_talent_data", id=cat.id)
                     continue
@@ -514,7 +461,7 @@ class CatEditor:
             for cat in cats:
                 if cat.talents is None:
                     continue
-                data = self.get_cat_talents(talent_data, cat)
+                data = talent_data.get_cat_talents(cat)
                 if data is None:
                     continue
                 if core.core_data.config.get_bool(core.ConfigKey.UNLOCK_CAT_ON_EDIT):
@@ -528,7 +475,7 @@ class CatEditor:
         color.ColoredText.localize("talents_success")
 
     @staticmethod
-    def edit_cats(save_file: "core.SaveFile"):
+    def edit_cats(save_file: core.SaveFile):
         cat_editor = CatEditor(save_file)
         current_cats = cat_editor.select()
         if current_cats is None:
@@ -540,9 +487,9 @@ class CatEditor:
 
     @staticmethod
     def unlock_remove_cats_run(
-        save_file: "core.SaveFile",
-        current_cats: Optional[list["core.Cat"]] = None,
-        cat_editor: Optional["CatEditor"] = None,
+        save_file: core.SaveFile,
+        current_cats: list[core.Cat] | None = None,
+        cat_editor: CatEditor | None = None,
     ):
         if cat_editor is None or current_cats is None:
             cat_editor, current_cats = CatEditor.from_save_file(save_file, True)
@@ -568,9 +515,9 @@ class CatEditor:
 
     @staticmethod
     def true_form_remove_form_cats_run(
-        save_file: "core.SaveFile",
-        current_cats: Optional[list["core.Cat"]] = None,
-        cat_editor: Optional["CatEditor"] = None,
+        save_file: core.SaveFile,
+        current_cats: list[core.Cat] | None = None,
+        cat_editor: CatEditor | None = None,
     ):
         if cat_editor is None or current_cats is None:
             cat_editor, current_cats = CatEditor.from_save_file(save_file)
@@ -591,9 +538,9 @@ class CatEditor:
 
     @staticmethod
     def fourth_form_remove_form_cats_run(
-        save_file: "core.SaveFile",
-        current_cats: Optional[list["core.Cat"]] = None,
-        cat_editor: Optional["CatEditor"] = None,
+        save_file: core.SaveFile,
+        current_cats: list[core.Cat] | None = None,
+        cat_editor: CatEditor | None = None,
     ):
         if cat_editor is None or current_cats is None:
             cat_editor, current_cats = CatEditor.from_save_file(save_file)
@@ -613,7 +560,7 @@ class CatEditor:
             cat_editor.remove_fourth_form_cats(current_cats)
 
     @staticmethod
-    def force_true_form_cats_run(save_file: "core.SaveFile"):
+    def force_true_form_cats_run(save_file: core.SaveFile):
         color.ColoredText.localize("force_true_form_cats_warning")
         cat_editor, current_cats = CatEditor.from_save_file(save_file)
         if cat_editor is None:
@@ -621,7 +568,7 @@ class CatEditor:
         cat_editor.true_form_cats(current_cats, force=True)
 
     @staticmethod
-    def force_fourth_form_cats_run(save_file: "core.SaveFile"):
+    def force_fourth_form_cats_run(save_file: core.SaveFile):
         color.ColoredText.localize("force_fourth_form_cats_warning")
         cat_editor, current_cats = CatEditor.from_save_file(save_file)
         if cat_editor is None:
@@ -629,7 +576,7 @@ class CatEditor:
         cat_editor.fourth_form_cats(current_cats, force=True)
 
     @staticmethod
-    def upgrade_cats_run(save_file: "core.SaveFile"):
+    def upgrade_cats_run(save_file: core.SaveFile):
         cat_editor, current_cats = CatEditor.from_save_file(save_file)
         if cat_editor is None:
             return
@@ -638,9 +585,9 @@ class CatEditor:
 
     @staticmethod
     def upgrade_talents_remove_talents_cats_run(
-        save_file: "core.SaveFile",
-        current_cats: Optional[list["core.Cat"]] = None,
-        cat_editor: Optional["CatEditor"] = None,
+        save_file: core.SaveFile,
+        current_cats: list[core.Cat] | None = None,
+        cat_editor: CatEditor | None = None,
     ):
         if cat_editor is None or current_cats is None:
             cat_editor, current_cats = CatEditor.from_save_file(save_file)
@@ -664,9 +611,9 @@ class CatEditor:
 
     @staticmethod
     def unlock_cat_guide_remove_guide_run(
-        save_file: "core.SaveFile",
-        current_cats: Optional[list["core.Cat"]] = None,
-        cat_editor: Optional["CatEditor"] = None,
+        save_file: core.SaveFile,
+        current_cats: list[core.Cat] | None = None,
+        cat_editor: CatEditor | None = None,
     ):
         if cat_editor is None or current_cats is None:
             cat_editor, current_cats = CatEditor.from_save_file(save_file)
@@ -690,9 +637,9 @@ class CatEditor:
 
     @staticmethod
     def from_save_file(
-        save_file: "core.SaveFile",
+        save_file: core.SaveFile,
         is_getting_cats: bool = False,
-    ) -> tuple[Optional["CatEditor"], list["core.Cat"]]:
+    ) -> tuple[CatEditor | None, list[core.Cat]]:
         cat_editor = CatEditor(save_file)
         current_cats = cat_editor.select(is_getting_cats=is_getting_cats)
         if current_cats is None:
@@ -701,9 +648,9 @@ class CatEditor:
 
     @staticmethod
     def run_edit_cats(
-        save_file: "core.SaveFile",
-        cats: list["core.Cat"],
-    ) -> tuple[bool, list["core.Cat"]]:
+        save_file: core.SaveFile,
+        cats: list[core.Cat],
+    ) -> tuple[bool, list[core.Cat]]:
         cat_editor = CatEditor(save_file)
         cat_editor.print_selected_cats(cats)
         options: list[str] = [
@@ -755,5 +702,5 @@ class CatEditor:
         return False, cats
 
     @staticmethod
-    def set_rank_up_sale(save_file: "core.SaveFile"):
+    def set_rank_up_sale(save_file: core.SaveFile):
         save_file.rank_up_sale_value = 0x7FFFFFFF

@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from requests.exceptions import ConnectionError
 from requests import Response
@@ -45,11 +45,20 @@ from bcsfe.core.game.catbase.powerup import PowerUpHelper
 from bcsfe.core.game.catbase.scheme_items import SchemeItems
 from bcsfe.core.game.catbase.special_skill import (
     SpecialSkills,
+    SpecialSkill,
     AbilityData,
     AbilityDataItem,
 )
 from bcsfe.core.game.catbase.stamp import StampData
-from bcsfe.core.game.catbase.talent_orbs import TalentOrb, TalentOrbs
+from bcsfe.core.game.catbase.talent_orbs import (
+    TalentOrb,
+    TalentOrbs,
+    OrbInfo,
+    OrbInfoList,
+    RawOrbInfo,
+    SaveOrb,
+    SaveOrbs,
+)
 from bcsfe.core.game.catbase.unlock_popups import UnlockPopups
 from bcsfe.core.game.catbase.upgrade import Upgrade
 from bcsfe.core.game.catbase.user_rank_rewards import (
@@ -85,7 +94,6 @@ from bcsfe.core.game.map.tower import TowerChapters
 from bcsfe.core.game.map.uncanny import UncannyChapters
 from bcsfe.core.game.map.zero_legends import ZeroLegendsChapters
 from bcsfe.core.game.map.map_names import MapNames
-from bcsfe.core.game.map.map import edit_chapters
 from bcsfe.core.game_version import GameVersion
 from bcsfe.core.io.adb_handler import AdbHandler, AdbNotInstalled
 from bcsfe.core.io.bc_csv import CSV, Delimeter, Row
@@ -123,25 +131,25 @@ class CoreData:
         self.local_manager = LocalManager()
         self.theme_manager = ThemeHandler()
         self.max_value_manager = MaxValueHelper()
-        self.game_data_getter: Optional[GameDataGetter] = None
-        self.gatya_item_names: Optional[GatyaItemNames] = None
-        self.gatya_item_buy: Optional[GatyaItemBuy] = None
-        self.chara_drop: Optional[CharaDrop] = None
-        self.gamatoto_levels: Optional[GamatotoLevels] = None
-        self.gamatoto_members_name: Optional[GamatotoMembersName] = None
-        self.localizable: Optional[Localizable] = None
-        self.abilty_data: Optional[AbilityData] = None
-        self.enemy_names: Optional[EnemyNames] = None
-        self.rank_gift_descriptions: Optional[RankGiftDescriptions] = None
-        self.rank_gifts: Optional[RankGifts] = None
-        self.treasure_text: Optional[TreasureText] = None
-        self.cat_shrine_levels: Optional[CatShrineLevels] = None
-        self.medal_names: Optional[MedalNames] = None
-        self.mission_names: Optional[MissionNames] = None
-        self.mission_conditions: Optional[MissionConditions] = None
+        self.game_data_getter: GameDataGetter | None = None
+        self.gatya_item_names: GatyaItemNames | None = None
+        self.gatya_item_buy: GatyaItemBuy | None = None
+        self.chara_drop: CharaDrop | None = None
+        self.gamatoto_levels: GamatotoLevels | None = None
+        self.gamatoto_members_name: GamatotoMembersName | None = None
+        self.localizable: Localizable | None = None
+        self.abilty_data: AbilityData | None = None
+        self.enemy_names: EnemyNames | None = None
+        self.rank_gift_descriptions: RankGiftDescriptions | None = None
+        self.rank_gifts: RankGifts | None = None
+        self.treasure_text: TreasureText | None = None
+        self.cat_shrine_levels: CatShrineLevels | None = None
+        self.medal_names: MedalNames | None = None
+        self.mission_names: MissionNames | None = None
+        self.mission_conditions: MissionConditions | None = None
 
     def get_game_data_getter(
-        self, save: Optional[SaveFile] = None, cc: Optional[CountryCode] = None
+        self, save: SaveFile | None = None, cc: CountryCode | None = None
     ) -> GameDataGetter:
         if self.game_data_getter is None:
             if cc is None and save is not None:
@@ -272,4 +280,16 @@ __all__ = [
     "ManagedItem",
     "ManagedItemType",
     "BackupMetaData",
+    "Cat",
+    "Upgrade",
+    "PowerUpHelper",
+    "TalentOrb",
+    "TalentOrbs",
+    "OrbInfo",
+    "OrbInfoList",
+    "RawOrbInfo",
+    "SaveOrb",
+    "SaveOrbs",
+    "ConfigKey",
+    "SpecialSkill",
 ]

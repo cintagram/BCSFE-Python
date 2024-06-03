@@ -1,39 +1,40 @@
+from __future__ import annotations
 from bcsfe import core
 
-from typing import Any, Optional
+from typing import Any
 
 from bcsfe.cli import dialog_creator, color
 
 
-class Skill:
-    def __init__(self, upg: "core.Upgrade"):
+class SpecialSkill:
+    def __init__(self, upg: core.Upgrade):
         self.upgrade = upg
         self.seen = 0
         self.max_upgrade_level = core.Upgrade(0, 0)
 
     @staticmethod
-    def init() -> "Skill":
-        return Skill(core.Upgrade(0, 0))
+    def init() -> SpecialSkill:
+        return SpecialSkill(core.Upgrade(0, 0))
 
     @staticmethod
-    def read_upgrade(stream: "core.Data") -> "Skill":
+    def read_upgrade(stream: core.Data) -> SpecialSkill:
         up = core.Upgrade.read(stream)
-        return Skill(up)
+        return SpecialSkill(up)
 
-    def write_upgrade(self, stream: "core.Data"):
+    def write_upgrade(self, stream: core.Data):
         self.upgrade.write(stream)
 
-    def read_seen(self, stream: "core.Data"):
+    def read_seen(self, stream: core.Data):
         self.seen = stream.read_int()
 
-    def write_seen(self, stream: "core.Data"):
+    def write_seen(self, stream: core.Data):
         stream.write_int(self.seen)
 
-    def read_max_upgrade_level(self, stream: "core.Data"):
+    def read_max_upgrade_level(self, stream: core.Data):
         level = core.Upgrade.read(stream)
         self.max_upgrade_level = level
 
-    def write_max_upgrade_level(self, stream: "core.Data"):
+    def write_max_upgrade_level(self, stream: core.Data):
         self.max_upgrade_level.write(stream)
 
     def serialize(self) -> dict[str, Any]:
@@ -44,8 +45,8 @@ class Skill:
         }
 
     @staticmethod
-    def deserialize(data: dict[str, Any]) -> "Skill":
-        skill = Skill(core.Upgrade.deserialize(data.get("upgrade", {})))
+    def deserialize(data: dict[str, Any]) -> SpecialSkill:
+        skill = SpecialSkill(core.Upgrade.deserialize(data.get("upgrade", {})))
         skill.seen = data.get("seen", 0)
         skill.max_upgrade_level = core.Upgrade.deserialize(
             data.get("max_upgrade_level", {})
@@ -60,10 +61,10 @@ class Skill:
 
     def set_upgrade(
         self,
-        upgrade: "core.Upgrade",
+        upgrade: core.Upgrade,
         only_plus: bool = False,
-        max_base: Optional[int] = None,
-        max_plus: Optional[int] = None,
+        max_base: int | None = None,
+        max_plus: int | None = None,
     ):
         if max_base is not None:
             upgrade.base = min(upgrade.base, max_base)
@@ -80,16 +81,16 @@ class Skill:
 
 
 class SpecialSkills:
-    def __init__(self, skills: list[Skill]):
+    def __init__(self, skills: list[SpecialSkill]):
         self.skills = skills
 
     @staticmethod
-    def init() -> "SpecialSkills":
-        skills = [Skill.init() for _ in range(11)]
+    def init() -> SpecialSkills:
+        skills = [SpecialSkill.init() for _ in range(11)]
         return SpecialSkills(skills)
 
-    def get_valid_skills(self) -> list[Skill]:
-        new_skills: list[Skill] = []
+    def get_valid_skills(self) -> list[SpecialSkill]:
+        new_skills: list[SpecialSkill] = []
         for i, skill in enumerate(self.skills):
             if i == 1:
                 continue
@@ -98,32 +99,32 @@ class SpecialSkills:
         return new_skills
 
     @staticmethod
-    def read_upgrades(stream: "core.Data") -> "SpecialSkills":
+    def read_upgrades(stream: core.Data) -> SpecialSkills:
         total_skills = 11
 
-        skills: list[Skill] = []
+        skills: list[SpecialSkill] = []
         for _ in range(total_skills):
-            skills.append(Skill.read_upgrade(stream))
+            skills.append(SpecialSkill.read_upgrade(stream))
 
         return SpecialSkills(skills)
 
-    def write_upgrades(self, stream: "core.Data"):
+    def write_upgrades(self, stream: core.Data):
         for skill in self.skills:
             skill.write_upgrade(stream)
 
-    def read_gatya_seen(self, stream: "core.Data"):
+    def read_gatya_seen(self, stream: core.Data):
         for skill in self.get_valid_skills():
             skill.read_seen(stream)
 
-    def write_gatya_seen(self, stream: "core.Data"):
+    def write_gatya_seen(self, stream: core.Data):
         for skill in self.get_valid_skills():
             skill.write_seen(stream)
 
-    def read_max_upgrade_levels(self, stream: "core.Data"):
+    def read_max_upgrade_levels(self, stream: core.Data):
         for skill in self.skills:
             skill.read_max_upgrade_level(stream)
 
-    def write_max_upgrade_levels(self, stream: "core.Data"):
+    def write_max_upgrade_levels(self, stream: core.Data):
         for skill in self.skills:
             skill.write_max_upgrade_level(stream)
 
@@ -131,10 +132,10 @@ class SpecialSkills:
         return [skill.serialize() for skill in self.skills]
 
     @staticmethod
-    def deserialize(data: list[dict[str, Any]]) -> "SpecialSkills":
+    def deserialize(data: list[dict[str, Any]]) -> SpecialSkills:
         skills = SpecialSkills([])
         for skill in data:
-            skills.skills.append(Skill.deserialize(skill))
+            skills.skills.append(SpecialSkill.deserialize(skill))
 
         return skills
 
@@ -144,7 +145,7 @@ class SpecialSkills:
     def __str__(self) -> str:
         return f"Skills(skills={self.skills})"
 
-    def edit(self, save_file: "core.SaveFile"):
+    def edit(self, save_file: core.SaveFile):
         names_o = core.core_data.get_gatya_item_names(save_file)
         items = core.core_data.get_gatya_item_buy(save_file).get_by_category(2)
         if items is None:
@@ -236,6 +237,15 @@ class SpecialSkills:
         if success:
             color.ColoredText.localize("skills_edited")
 
+    def get_from_id(self, id: int, only_valid: bool = True) -> SpecialSkill | None:
+        if only_valid:
+            skills = self.get_valid_skills()
+        else:
+            skills = self.skills
+        if id >= len(skills) or id < 0:
+            return None
+        return skills[id]
+
 
 class AbilityDataItem:
     def __init__(
@@ -256,11 +266,11 @@ class AbilityDataItem:
 
 
 class AbilityData:
-    def __init__(self, save_file: "core.SaveFile"):
+    def __init__(self, save_file: core.SaveFile):
         self.save_file = save_file
         self.ability_data = self.get_ability_data()
 
-    def get_ability_data(self) -> Optional[list[AbilityDataItem]]:
+    def get_ability_data(self) -> list[AbilityDataItem] | None:
         gdg = core.core_data.get_game_data_getter(self.save_file)
         data = gdg.download("DataLocal", "AbilityData.csv")
         if data is None:
@@ -280,7 +290,7 @@ class AbilityData:
             )
         return ability_data
 
-    def get_ability_data_item(self, item_id: int) -> Optional[AbilityDataItem]:
+    def get_ability_data_item(self, item_id: int) -> AbilityDataItem | None:
         if self.ability_data is None:
             return None
         return self.ability_data[item_id]
